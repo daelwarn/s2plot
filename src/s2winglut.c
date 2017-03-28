@@ -32,6 +32,7 @@
  *
  */
 
+#include "s2globals.h"  // DW: needed for initial position values.. maybe there's a better place to put this?
 #include "s2win.h"
 #include "s2const.h"
 #include <stdio.h>
@@ -50,7 +51,13 @@
 
 void s2winInit(int *argc, char **argv) {
   glutInit(argc, argv);
+#if defined(S2MPICH)
+printf("s2winInit(): set initial window position (%i, %i)\n", _s2_initpos_x, _s2_initpos_y);
+glutInitWindowPosition(_s2_initpos_x, _s2_initpos_y);
+#else
+printf("s2winInit(): set initial window position (%i, %i)\n", 0, 0);
 glutInitWindowPosition(0, 0);
+#endif
 }
 
 void s2winMainLoop(void) {

@@ -330,6 +330,7 @@ void CreateProjection(int eye) {
     
     //XYZ eye_pos = camera.vp;
     XYZ eye_pos = {0., 1.8, 0.}; // only way to change eye pos in S2MPICH
+    eye_pos = VectorAdd(g_eyePos, eye_pos); // DW: add eye offset to eye position
     // mode should be by tracker
 
     if (eye == 'l') {

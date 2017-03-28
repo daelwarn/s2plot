@@ -392,6 +392,12 @@ extern int _s2mpi_clipview;
 extern double _s2mpi_unclipped_proj[16];
 #endif
 
+/* DW: initial screen geometry for MPI build */
+#if defined(S2MPICH)
+extern int _s2_initpos_x;
+extern int _s2_initpos_y;
+#endif
+
 /* store for the device string in case a device needs further info */
 extern char _s2_devstr[128];
   

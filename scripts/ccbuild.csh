@@ -35,6 +35,16 @@
  # - compiles 'target.cc' and links to produce executable 'target'
  #
 
+set objnames=
+
+foreach arg( $* )
+
+set objnames=($objnames $arg.o)
+
+end
+ 
+echo $objnames
+ 
 if (!(${?S2PATH})) then
   echo "S2PATH environment variable MUST be set ... please fix and retry."
   exit(-1);
@@ -55,7 +65,10 @@ if ($thisdir == $S2PATH) then
   exit(-1);
 endif
 
-set target=`echo $1 | sed -e 's/\.cc$//g'`
+foreach arg( $* )
+
+#set target=`echo $1 | sed -e 's/\.cc$//g'`
+set target=`echo $arg | sed -e 's/\.cc$//g'`
 set source=${target}.cc
 set object=${target}.o
 if (! -e ${source}) then
@@ -63,11 +76,39 @@ if (! -e ${source}) then
   exit(-1);
 endif 
 
-echo "Compiling source code file ${source} ..."
-$S2CCMPILER ${S2EXTRAINC} -I${S2PATH}/src $source
+echo "Checking ${target}.* date against $1.."
+set newerfile=`find ${target}.* -newer $1`
+#if ({ find ${target}.* -newer $1 }) then
+if("$newerfile" == "") then
+  # check if the output file exists first
+  if(-e $object) then
+    echo "Skipping file ${target}, it appears up-to-date"
+    continue
+  else
+    echo "${target} is missing, building.."
+  endif
+else
+  echo "Building ${target}"
+endif
 
-echo "Linking object file ${target}.o ..."
-$S2CCINKER -o $target ${object} -L${S2PATH}/${S2KERNEL} ${S2LINKS} ${MLLINKS} ${SWLINKS} ${GLLINKS} -L${S2X11PATH}/lib${S2LBITS} ${S2FORMSLINK} -lXpm -lX11 ${IMATH} -lm ${XLINKPATH} ${S2EXTRALIB}
+echo "Compiling source code file ${source} ..."
+$S2CCMPILER ${S2EXTRAINC} -std=c++11 -I${S2PATH}/src $source
+
+if($status != 0) then
+  echo "Build failed on file ${source}, aborting!"
+  exit(-1);
+endif
+
+echo "Status: ${status}"
+
+end
+
+set target=$1
+
+#echo "Linking object file ${target}.o ..."
+echo "Linking object files ${objnames} into executable ${target}..."
+#$S2CCINKER -o $target ${object} -L${S2PATH}/${S2KERNEL} ${S2LINKS} ${MLLINKS} ${SWLINKS} ${GLLINKS} -L${S2X11PATH}/lib${S2LBITS} ${S2FORMSLINK} -lXpm -lX11 ${IMATH} -lm ${XLINKPATH} ${S2EXTRALIB}
+$S2CCINKER -o $target ${objnames} -L${S2PATH}/${S2KERNEL} ${S2LINKS} ${MLLINKS} ${SWLINKS} ${GLLINKS} -L${S2X11PATH}/lib${S2LBITS} ${S2FORMSLINK} -lXpm -lX11 ${IMATH} -lm ${XLINKPATH} ${S2EXTRALIB}
 
 if ((${?S2INSTALLPATH})) then
   if (! -d $S2INSTALLPATH) then
@@ -80,7 +121,8 @@ if ((${?S2INSTALLPATH})) then
   endif
 endif
 
-echo "Cleaning up ..."
-rm -rf $object
+# Disabled cleanup for incremental builds
+#echo "Cleaning up ..."
+#rm -rf $object
 
 echo "Done!"

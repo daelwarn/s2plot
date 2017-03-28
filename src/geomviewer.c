@@ -55,6 +55,9 @@
 #define WINWIDTH (options.screenwidth)
 #define WINHEIGHT (options.screenheight)
 
+// DW: 20170309 - testing custom eye position function
+XYZ g_eyePos = {0.0f, 0.0f, 0.0f};
+
 #if defined(S2CLOSED)
 #include "_CLOSED_misc/s2glu.c"
 #else
