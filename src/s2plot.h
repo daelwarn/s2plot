@@ -1460,6 +1460,10 @@ void ss2tc(int enabledisable);
 float ss2qess(void);
 void ss2sess(float ieyesep);
 
+// DW: 20170309 - testing a function for changing eye position
+void setS2EyePos(XYZ position);
+extern XYZ g_eyePos;
+
 /***********************************************************************
  *
  * IMAGE WRITING/FETCHING

@@ -7843,6 +7843,12 @@ void ss2sess(float ieyesep) {
   _s2_eyesepmul = ieyesep;
 }
 
+// DW: testing custom eye position function
+void setS2EyePos(XYZ position)
+{
+  g_eyePos = position;
+}
+
 
 /***********************************************************************
  *
