@@ -42,9 +42,9 @@ foreach arg( $* )
 set objnames=($objnames $arg.o)
 
 end
- 
+
 echo $objnames
- 
+
 if (!(${?S2PATH})) then
   echo "S2PATH environment variable MUST be set ... please fix and retry."
   exit(-1);
@@ -65,6 +65,19 @@ if ($thisdir == $S2PATH) then
   exit(-1);
 endif
 
+# set any include paths that are relative to the project folder
+if ((${?S2LOCALINC})) then
+  if((${?S2EXTRAINC})) then
+    set S2EXTRAINC=
+  endif
+
+  foreach p (${S2LOCALINC})
+    set S2EXTRAINC=(${S2EXTRAINC} -I${thisdir}/${p})
+  end
+
+  echo Extra include paths: ${S2EXTRAINC}
+endif
+
 foreach arg( $* )
 
 #set target=`echo $1 | sed -e 's/\.cc$//g'`
@@ -76,19 +89,24 @@ if (! -e ${source}) then
   exit(-1);
 endif 
 
-echo "Checking ${target}.* date against $1.."
-set newerfile=`find ${target}.* -newer $1`
-#if ({ find ${target}.* -newer $1 }) then
-if("$newerfile" == "") then
-  # check if the output file exists first
-  if(-e $object) then
-    echo "Skipping file ${target}, it appears up-to-date"
-    continue
+# DW: incremental build, not entirely safe because it only checks if source files are newer than the executable
+# .. sometimes this will break things if project files depend on other project files
+if(${?S2INCREMENTAL}) then
+  echo "Checking ${target}.* date against ${target}.o.."
+#  set newerfile=`find ${target}.* -newer $1`
+  set newerfile=`find ${target}.* -newer ${target}.o`
+  #if ({ find ${target}.* -newer $1 }) then
+  if("$newerfile" == "") then
+    # check if the output file exists first
+    if(-e $object) then
+      echo "Skipping file ${target}, it appears up-to-date"
+      continue
+    else
+      echo "${target} is missing, building.."
+    endif
   else
-    echo "${target} is missing, building.."
+    echo "Building ${target}"
   endif
-else
-  echo "Building ${target}"
 endif
 
 echo "Compiling source code file ${source} ..."
@@ -105,10 +123,24 @@ end
 
 set target=$1
 
+set qobjnames=
+
+foreach o (${objnames})
+  #set qobjnames=(${qobjnames} ${thisdir}/${o})
+  set qobjnames=(${qobjnames} ${o:t})
+  echo Filename: ${o:t}
+end
+
+echo ${qobjnames}
+
 #echo "Linking object file ${target}.o ..."
-echo "Linking object files ${objnames} into executable ${target}..."
+#echo "Linking object files ${objnames} into executable ${target}..."
+echo "Linking object files ${qobjnames} into executable ${target}..."
 #$S2CCINKER -o $target ${object} -L${S2PATH}/${S2KERNEL} ${S2LINKS} ${MLLINKS} ${SWLINKS} ${GLLINKS} -L${S2X11PATH}/lib${S2LBITS} ${S2FORMSLINK} -lXpm -lX11 ${IMATH} -lm ${XLINKPATH} ${S2EXTRALIB}
-$S2CCINKER -o $target ${objnames} -L${S2PATH}/${S2KERNEL} ${S2LINKS} ${MLLINKS} ${SWLINKS} ${GLLINKS} -L${S2X11PATH}/lib${S2LBITS} ${S2FORMSLINK} -lXpm -lX11 ${IMATH} -lm ${XLINKPATH} ${S2EXTRALIB}
+
+#dw - test
+#$S2CCINKER -o $target ${objnames} -L${S2PATH}/${S2KERNEL} ${S2LINKS} ${MLLINKS} ${SWLINKS} ${GLLINKS} -L${S2X11PATH}/lib${S2LBITS} ${S2FORMSLINK} -lXpm -lX11 ${IMATH} -lm ${XLINKPATH} ${S2EXTRALIB}
+$S2CCINKER -o $target ${qobjnames} -L${S2PATH}/${S2KERNEL} ${S2LINKS} ${MLLINKS} ${SWLINKS} ${GLLINKS} -L${S2X11PATH}/lib${S2LBITS} ${S2FORMSLINK} -lXpm -lX11 ${IMATH} -lm ${XLINKPATH} ${S2EXTRALIB}
 
 if ((${?S2INSTALLPATH})) then
   if (! -d $S2INSTALLPATH) then
