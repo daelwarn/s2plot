@@ -6350,6 +6350,35 @@ int s2open(int ifullscreen, int istereo, int iargc, char **iargv) {
   /* Setup, initialise OpenGL and windowing system (glut or other) */
   _s2debug("s2open*", "initialising window system (glut or other)");
 
+#if defined(S2MPICH)
+  // DW: for MPI build, use environment values S2PLOT_TOP and S2PLOT_LEFT to specify initial window position
+  char * strTop = getenv("S2PLOT_TOP");
+  char * strLeft = getenv("S2PLOT_LEFT");
+
+  // should be safe to set unconditionally here, as atoi returns 0 on failure, and 0 is the default position anyway;
+  // this means either environment value can be left out if not needed
+  if(strTop)
+  {
+    _s2_initpos_y = atoi(strTop);
+    printf("S2PLOT_TOP: %i\n", _s2_initpos_y);
+  }
+  else
+  {
+    printf("S2PLOT_TOP not found\n");
+    _s2_initpos_y = 0;
+  }
+  if(strLeft)
+  {
+    _s2_initpos_x = atoi(strLeft);
+    printf("S2PLOT_LEFT: %i\n", _s2_initpos_x);
+  }
+  else
+  {
+    printf("S2PLOT_LEFT not found\n");
+    _s2_initpos_x = 0;
+  }
+#endif
+
 #if defined(S2DARWIN)
   /* darwin glut framework changes directory and doesn't restore it
    * correctly. */
